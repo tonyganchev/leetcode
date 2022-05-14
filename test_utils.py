@@ -4,7 +4,7 @@
 import time
 
 
-max_items = 5
+max_items = 20
 
 
 def run_test(method, args, expected):
