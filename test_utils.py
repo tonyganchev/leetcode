@@ -4,7 +4,7 @@ import time
 
 
 _max_items = 20
-
+_max_len = 50
 
 def run_test(method, args, expected):
     passed_args = deepcopy(args)
@@ -12,7 +12,7 @@ def run_test(method, args, expected):
     result = method(*passed_args)
     duration = time.time() - start_time
     success = result == expected
-    printable_args = [(a[:_max_items] if type(a) is list or type(a) is tuple else a) for a in args]
+    printable_args = [(str(a[:_max_items])[:_max_len] if type(a) is list or type(a) is tuple else a) for a in args]
     printable_result = result[:_max_items] if type(result) is list or type(result) is tuple else result
     printable_expected = expected[:_max_items] if type(expected) is list or type(expected) is tuple else expected
     print('{} in {:.3f} sec, args: {} result: {} expected: {}'.format(
