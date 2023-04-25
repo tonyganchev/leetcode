@@ -2,6 +2,7 @@
 from copy import deepcopy
 import time
 
+null = None
 
 _max_items = 20
 _max_len = 100
