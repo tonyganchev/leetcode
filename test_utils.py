@@ -21,4 +21,3 @@ def run_test(method, args, expected):
         duration,
         printable_args,
         printable_result, printable_expected))
- 
