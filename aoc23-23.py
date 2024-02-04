@@ -243,8 +243,7 @@ def solve2(data: str) -> int:
             node = stack.current_suite.current_test
 
             grid[node.y][node.x] = visited[grid[node.y][node.x]]
-            # print_grid(grid)
-            
+
             test_exhausted = True
             if node.y == len(grid) - 1:
                 pl = stack.path_length
