@@ -7,21 +7,23 @@ import re
 import numpy as np
 from functools import cache
 from matplotlib import pyplot as plt
+from sympy import Plane, Line3D, Point3D, Symbol, solve_poly_system, solve_triangulated
+from z3 import z3
 
-x = 0
-y = 1
-z = 2
+X = 0
+Y = 1
+Z = 2
 
 
 def intersect(p1, v1, p2, v2):
-    p1x = p1[x]
-    p1y = p1[y]
-    p2x = p2[x]
-    p2y = p2[y]
-    v1x = v1[x]
-    v1y = v1[y]
-    v2x = v2[x]
-    v2y = v2[y]
+    p1x = p1[X]
+    p1y = p1[Y]
+    p2x = p2[X]
+    p2y = p2[Y]
+    v1x = v1[X]
+    v1y = v1[Y]
+    v2x = v2[X]
+    v2y = v2[Y]
     k = (v1x * v2y - v1y * v2x)
     if k == 0:
         return None
@@ -54,100 +56,60 @@ def solve(data: str, lo, hi) -> int:
     return c
 
 
+def are_dependent(l, r):
+    return l[X] * r[Y] == l[Y] * r[X] and l[X] * r[Z] == l[Z] * r[X]
+
+
 def solve2(data: str, lo, hi) -> int:
+    ff = 1000000000000
+    xmin = +Infinity
+    xmax = -Infinity
+    ymin = +Infinity
+    ymax = -Infinity
+    zmin = +Infinity
+    zmax = -Infinity
     hailstones = []
     for h in data.splitlines():
         pos_s, vel_s = h.split(' @ ')
-        pos = tuple(float(f) for f in pos_s.split(', '))
-        vel = tuple(float(f) for f in vel_s.split(', '))
+        pos = Point3D(*(int(f) for f in pos_s.split(', ')))
+        vel = tuple(int(f) for f in vel_s.split(', '))
         hailstones.append((pos, vel))
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-
-    for (px, py, pz), (vx, vy, vz) in hailstones:
-        ax.plot([px, px + 10 * vx], [py, py + 10 * vy], [pz, pz + 10 * vz])
+        xmin = min(int(pos.x), xmin)
+        xmax = max(int(pos.x), xmax)
+        ymin = min(int(pos.y), ymin)
+        ymax = max(int(pos.y), ymax)
+        zmin = min(int(pos.z), zmin)
+        zmax = max(int(pos.z), zmax)
 
     for i, (p1, v1) in enumerate(hailstones):
-        for j, (p2, v2) in enumerate(hailstones[i + 1:], 1):
-            r = intersect(p1, v1, p2, v2)
-            if r is None:
-                print('parallel')
-                p3 = p1[x] + 10 * v1[x], p1[y] + 10 * v1[y], p1[z] + 10 * v1[z]
-                xa = np.array(
-                    [[p1[x], p2[x]], [p1[x] + 10 * v1[x], p2[x] + 10 * v2[x]]])
-                ya = np.array(
-                    [[p1[y], p2[y]], [p1[y] + 10 * v1[y], p2[y] + 10 * v2[y]]])
-                za = np.array(
-                    [[p1[z], p2[z]], [p1[z] + 10 * v1[z], p2[z] + 10 * v2[z]]])
-
-
-                ax.plot_surface(xa, ya, za)
-
-                a, b, c, d = plane_equation(p1, p2, p3)
-                assert a * p1[x] + b * p1[y] + c * p1[z] + d == 0
-
-                intersections = []
-
-                for k, h in enumerate(hailstones):
-                    x0, y0, z0 = h[0]
-                    vx, vy, vz = h[1]
-                    vv = a * vx + b * vy + c * vz
-                    if vv != 0:
-                        t = (- d - a * x0 - b * y0 - c * z0) / vv
-                        print('Intersection in t:', t)
-                        ix = x0 + vx * t
-                        iy = y0 + vy * t
-                        iz = z0 + vz * t
-                        intersections.append([ix, iy, iz, t])
-                        # if len(intersections) == 2:
-                        #     break
-
-                (x1, y1, z1, t1), (x2, y2, z2, t2) = intersections[:2]
-
-                vx = (x1 - x2) / (t2 - t1)
-                vy = (y1 - y2) / (t2 - t1)
-                zy = (z1 - z2) / (t2 - t1)
-                x0 = x1 - t * vx
-                y0 = y1 - t * vy
-                z0 = z1 - t * zy
-
-                ax.plot([x0, x0 + 20 * vx], [y0, y0 + 20 * vy], [z0, z0 + 20 * vz])
-                plt.show()
-
-                return x0 + y0 + z0
-
-
-
-def plane_equation(p1, p2, p3):
-    x1, y1, z1 = p1
-    x2, y2, z2 = p2
-    x3, y3, z3 = p3
-    a1 = x2 - x1
-    b1 = y2 - y1
-    c1 = z2 - z1
-    a2 = x3 - x1
-    b2 = y3 - y1
-    c2 = z3 - z1
-    a = b1 * c2 - b2 * c1
-    b = a2 * c1 - a1 * c2
-    c = a1 * b2 - b1 * a2
-    d = (- a * x1 - b * y1 - c * z1)
-    return a, b, c, d
-
-    # c = 0
-    # for i, (p1, v1) in enumerate(hailstones):
-    #     for p2, v2 in hailstones[i + 1:]:
-    #         r = intersect(p1, v1, p2, v2)
-    #         if r is None:
-    #             print('parallel')
-    #         else:
-    #             cx, cy, t1, t2 = r
-    #             print(cx, cy, t1, t2)
-    #             if lo <= cx and cx <= hi and lo <= cy and cy <= hi and t1 >= 0 and t2 >= 0:
-    #                 c += 1
-    # return c
-
+        for j, (p2, v2) in enumerate(hailstones[i + 1:], i + 1):
+            if not are_dependent(v1, v2):
+                for k, (p3, v3) in enumerate(hailstones):
+                    if not are_dependent(v1, v3) and not are_dependent(v2, v3):
+                        print('Testing', (p1, v1), (p2, v2), (p3, v3))
+                        
+                        x0 = z3.Int('x0')
+                        y0 = z3.Int('y0')
+                        z0 = z3.Int('z0')
+                        vx0 = z3.Int('vx0')
+                        vy0 = z3.Int('vy0')
+                        vz0 = z3.Int('vz0')
+                        t1 = z3.Int('t1')
+                        t2 = z3.Int('t2')
+                        t3 = z3.Int('t3')
+                        solver = z3.Solver()
+                        solver.add(x0 + vx0 * t1 == p1.x + v1[X] * t1)
+                        solver.add(y0 + vy0 * t1 == p1.y + v1[Y] * t1)
+                        solver.add(z0 + vz0 * t1 == p1.z + v1[Z] * t1)
+                        solver.add(x0 + vx0 * t2 == p2.x + v2[X] * t2)
+                        solver.add(y0 + vy0 * t2 == p2.y + v2[Y] * t2)
+                        solver.add(z0 + vz0 * t2 == p2.z + v2[Z] * t2)
+                        solver.add(x0 + vx0 * t3 == p3.x + v3[X] * t3)
+                        solver.add(y0 + vy0 * t3 == p3.y + v3[Y] * t3)
+                        solver.add(z0 + vz0 * t3 == p3.z + v3[Z] * t3)
+                        assert solver.check() == z3.sat
+                        model = solver.model()
+                        return sum([model[x0].as_long(), model[y0].as_long(), model[z0].as_long()])
 
 small_vector = ''
 small_vector_2 = ''
@@ -157,7 +119,7 @@ official_vector = ''
 def run_tests():
     # run_test(solve, [small_vector, 7.0, 27.0], 2)
     # run_test(solve, [official_vector, 200000000000000.0, 400000000000000.0], 2094)
-    # run_test(solve2, [small_vector, 7.0, 27.0], 47)
+    run_test(solve2, [small_vector, 7.0, 27.0], 47)
     run_test(solve2, [official_vector, 7.0, 27.0], 47)
 
 
@@ -166,11 +128,6 @@ small_vector = r'''19, 13, 30 @ -2,  1, -2
 20, 25, 34 @ -2, -2, -4
 12, 31, 28 @ -1, -2, -1
 20, 19, 15 @  1, -5, -3'''
-
-small_vector_2 = r'''0,0,1~0,5,1
-0,6,1~0,9,1
-0,0,2~0,0,2
-0,3,2~0,8,2'''
 
 official_vector = r'''246694783951603, 201349632539530, 307741668306846 @ 54, -21, 12
 220339749104883, 131993821472398, 381979584524072 @ 77, 7, -58
