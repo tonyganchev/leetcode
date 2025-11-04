@@ -1,15 +1,15 @@
 #include <cassert>
-#include <iostream>
-#include <iterator>
-#include <list>
-#include <unordered_map>
+
+import std;
 
 namespace std {
+
     template<typename F, typename S>
     ostream& operator <<(ostream& os, const pair<F, S>& p) {
         os << p.first << " -> " << p.second;
         return os;
     }
+
 }
 
 using namespace std;
@@ -26,7 +26,7 @@ private:
     using map_value_type = typename list_type::iterator;
 
 public:
-    lru_cache(const size_t max_size) : max_size_(max_size) { }
+    lru_cache(const size_t max_size) : max_size_(max_size) {}
 
     bool contains(const key_type& key) const {
         bump_recency(key);
@@ -59,7 +59,7 @@ public:
     }
 
     friend ostream& operator <<(ostream& os, const lru_cache& cache) {
-        ostream_iterator<list_value_type> oit { os, "; " };
+        ostream_iterator<list_value_type> oit{ os, "; " };
         copy(cache.list_.cbegin(), cache.list_.cend(), oit);
         return os;
     }
@@ -104,6 +104,8 @@ int main() {
 
     cout << "Touching 1" << endl;
 
+    // trying out the const reference just to confirm the cache is conceptually
+    // const but still evicts items.
     const auto& c = cache;
     c.contains(1);
     cout << cache << endl;
