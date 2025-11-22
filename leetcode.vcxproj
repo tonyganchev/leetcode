@@ -129,7 +129,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="advent-of-code\2023\aoc23-2.cpp" />
+    <ClCompile Include="advent-of-code\2024\aoc24-6.cpp" />
     <ClCompile Include="utils.ixx">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCppModule</CompileAs>
     </ClCompile>
