@@ -1,10 +1,11 @@
 import std;
+import utils;
 
 using namespace std;
 
-static int basic_problem(vector<int>& left, vector<int>& right) {
-    std::ranges::sort(left);
-    std::ranges::sort(right);
+static auto basic_problem(vector<int>& left, vector<int>& right) {
+    ranges::sort(left);
+    ranges::sort(right);
 
     auto r = 0;
     for (auto i = 0; i < left.size(); i++) {
@@ -14,18 +15,19 @@ static int basic_problem(vector<int>& left, vector<int>& right) {
     return r;
 }
 
-static int advanced_problem(const vector<int>& left, const vector<int>& right) {
-    auto r = 0;
-    for (auto i : left) {
-        auto c = 0;
-        for (auto j : right) {
-            if (i == j) {
-                c++;
-            }
-        }
-        r += i * c;
+static auto advanced_problem(
+        const vector<int>& left,
+        const vector<int>& right) {
+    unordered_map<int, int> right_freq;
+    for (auto r : right) {
+        right_freq[r]++;
     }
-    return r;
+
+    auto v = left | views::transform([&rf = as_const(right_freq)](auto l) {
+        return l * try_get(rf, l, 0);
+    });
+    // XXX: It seems fold_left() is not pipeable in Visual C++ 2026 Insider.
+    return ranges::fold_left(v, 0, plus());
 }
 
 int main() {
@@ -2035,7 +2037,7 @@ int main() {
         96823,
         34885
     };
-    std::cout << basic_problem(left, right) << endl;
-    std::cout << advanced_problem(left, right) << endl;
+    cout << basic_problem(left, right) << endl;
+    cout << advanced_problem(left, right) << endl;
     return 0;
 }
