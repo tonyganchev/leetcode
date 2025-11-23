@@ -6,26 +6,45 @@ import utils;
 
 using namespace std;
 
-static auto apply_operators(long long total_sum, long long current_sum, ispanstream& iss) {
+static auto apply_operators(
+        long long total_sum,
+        long long current_sum,
+        ispanstream& iss,
+        bool with_concat) {
+
     if (iss.fail() || iss.eof()) {
         return total_sum == current_sum;
     }
     int n;
     iss >> n;
     auto p = iss.tellg();
-    auto r = apply_operators(total_sum, current_sum + n, iss);
+    auto r = apply_operators(total_sum, current_sum + n, iss, with_concat);
     iss.clear();
     iss.seekg(p);
     if (r) {
         return true;
     }
-    r = apply_operators(total_sum, current_sum * n, iss);
+    r = apply_operators(total_sum, current_sum * n, iss, with_concat);
     iss.clear();
     iss.seekg(p);
-    return r;
+    if (r) {
+        return true;
+    }
+    if (with_concat) {
+        int k = n;
+        while (k > 0) {
+            k /= 10;
+            current_sum *= 10;
+        }
+        r = apply_operators(total_sum, current_sum + n, iss, with_concat);
+        iss.clear();
+        iss.seekg(p);
+        return r;
+    }
+    return false;
 }
 
-static auto basic_problem(string_view data) {
+static auto solve_problem(string_view data, bool with_concat) {
     auto result = 0LL;
     auto lines = data | views::split('\n');
     for (const auto line_item : lines) {
@@ -37,20 +56,19 @@ static auto basic_problem(string_view data) {
         iss.get();
         int n;
         iss >> n;
-        cout << sv << " -> ";
-        if (apply_operators(s, n, iss)) {
-            cout << "possible";
+        if (apply_operators(s, n, iss, with_concat)) {
             result += s;
-        } else {
-            cout << "impossible";
         }
-        cout << endl;
     }
     return result;
 }
 
+static auto basic_problem(string_view data) {
+    return solve_problem(data, false);
+}
+
 static auto advanced_problem(string_view data) {
-    return 0;
+    return solve_problem(data, true);
 }
 
 int main() {
@@ -63,16 +81,6 @@ int main() {
 192: 17 8 14
 21037: 9 7 18 13
 292: 11 6 16 20)"sv;
-    /*auto small_vector = R"(292: 11 6 16 20 0
-190: 10 19
-3267: 81 40 27
-83: 17 5
-156: 15 6
-7290: 6 8 6 15
-161011: 16 10 13
-192: 17 8 14
-21037: 9 7 18 13
-)"sv;*/
     auto large_vector =
         "503516274925: 9 314 8 83 6 45 997 25\n"
         "999: 45 25 5 645 4\n"
@@ -923,12 +931,13 @@ int main() {
         "11799346: 985 99 121 5 26\n"
         "89285174: 89 28 1 5 17 4 2\n"
         "2131137: 4 531 7 137\n"
-        "196850926: 7 75 254 898 26\n"sv;
+        "196850926: 7 75 254 898 26"sv;
     cout << basic_problem(small_vector) << endl;
     cout << basic_problem(large_vector) << endl;
-    /*
     cout << advanced_problem(small_vector) << endl;
-    cout << advanced_problem(large_vector) << endl;*/
+    cout << advanced_problem(large_vector) << endl;
+    /*
+    */
     return 0;
 }
 ////
