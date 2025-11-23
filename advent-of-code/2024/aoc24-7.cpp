@@ -6,7 +6,7 @@ import utils;
 
 using namespace std;
 
-static auto apply_operators(int total_sum, int current_sum, ispanstream& iss) {
+static auto apply_operators(long long total_sum, long long current_sum, ispanstream& iss) {
     if (iss.fail() || iss.eof()) {
         return total_sum == current_sum;
     }
@@ -26,12 +26,12 @@ static auto apply_operators(int total_sum, int current_sum, ispanstream& iss) {
 }
 
 static auto basic_problem(string_view data) {
-    auto result = 0;
+    auto result = 0LL;
     auto lines = data | views::split('\n');
     for (const auto line_item : lines) {
         string_view sv(line_item);
         ispanstream iss{ sv };
-        int s;
+        long long s;
         iss >> skipws >> s;
         // quick and dirty skip the ":"
         iss.get();
@@ -925,7 +925,8 @@ int main() {
         "2131137: 4 531 7 137\n"
         "196850926: 7 75 254 898 26\n"sv;
     cout << basic_problem(small_vector) << endl;
-    /*cout << basic_problem(large_vector) << endl;
+    cout << basic_problem(large_vector) << endl;
+    /*
     cout << advanced_problem(small_vector) << endl;
     cout << advanced_problem(large_vector) << endl;*/
     return 0;
