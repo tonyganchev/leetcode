@@ -15,15 +15,11 @@ static auto part1(Stream is) {
     is >> skipws;
     auto dial = 50;
     auto counter = 0;
-    while (is) {
-        char rotation;
-        int change;
-        is >> rotation >> change;
-        if (!is) {
-            break;
-        }
+    char rotation;
+    int change;
+    while (is >> rotation >> change) {
         assert(rotation == 'R' || rotation == 'L');
-        auto op = rotation == 'L' ? -1 : 1;
+        const auto op = rotation == 'L' ? -1 : 1;
         dial = (dial + op * change) % dial_ticks;
         if (dial == 0) {
             counter++;
@@ -32,9 +28,10 @@ static auto part1(Stream is) {
     return counter;
 }
 
-static auto count_zeros(int dial, int op, int d) {
+static auto count_zeros(const int dial, const int op, const int change) {
     auto old_dial_buffered = dial + dial_buffer;
-    auto new_dial_buffered = old_dial_buffered + op * d;
+    auto new_dial_buffered = old_dial_buffered + op * change;
+    // XXX: I hate myself for writing this corner case hanler...
     if (op == -1) {
         if (dial == 0) {
             old_dial_buffered--;
@@ -43,7 +40,7 @@ static auto count_zeros(int dial, int op, int d) {
             new_dial_buffered--;
         }
     }
-    auto zeros = abs(new_dial_buffered / dial_ticks
+    const auto zeros = abs(new_dial_buffered / dial_ticks
         - old_dial_buffered / dial_ticks);
     return zeros;
 }
@@ -53,17 +50,13 @@ template <typename Stream>
 static auto part2(Stream is) {
     is >> skipws;
     auto dial = 50;
-    long long counter = 0;
-    while (is) {
-        char rotation;
-        int change;
-        is >> rotation >> change;
-        if (!is) {
-            break;
-        }
+    auto counter = 0;
+    char rotation;
+    int change;
+    while (is >> rotation >> change) {
         assert(rotation == 'R' || rotation == 'L');
-        auto op = rotation == 'L' ? -1 : 1;
-        auto zeros = count_zeros(dial, op, change);
+        const auto op = rotation == 'L' ? -1 : 1;
+        const auto zeros = count_zeros(dial, op, change);
         counter += zeros;
         dial = (dial + dial_buffer + op * change) % dial_ticks;
     }
