@@ -10,17 +10,21 @@ static constexpr auto dial_ticks = 100;
 static constexpr auto dial_buffer = 10 * dial_ticks;
 
 // https://adventofcode.com/2025/day/1#part1
-static auto part1(istream& is) {
+template <typename Stream>
+static auto part1(Stream is) {
     is >> skipws;
     auto dial = 50;
     auto counter = 0;
     while (is) {
-        char c;
-        int d;
-        is >> c >> d;
-        assert(c == 'R' || c == 'L');
-        auto op = c == 'L' ? -1 : 1;
-        dial = (dial + op * d) % dial_ticks;
+        char rotation;
+        int change;
+        is >> rotation >> change;
+        if (!is) {
+            break;
+        }
+        assert(rotation == 'R' || rotation == 'L');
+        auto op = rotation == 'L' ? -1 : 1;
+        dial = (dial + op * change) % dial_ticks;
         if (dial == 0) {
             counter++;
         }
@@ -31,8 +35,7 @@ static auto part1(istream& is) {
 static auto count_zeros(int dial, int op, int d) {
     auto old_dial_buffered = dial + dial_buffer;
     auto new_dial_buffered = old_dial_buffered + op * d;
-    if (op == -1)
-    {
+    if (op == -1) {
         if (dial == 0) {
             old_dial_buffered--;
         }
@@ -46,25 +49,29 @@ static auto count_zeros(int dial, int op, int d) {
 }
 
 // https://adventofcode.com/2025/day/1#part2
-static auto part2(istream& is) {
+template <typename Stream>
+static auto part2(Stream is) {
     is >> skipws;
     auto dial = 50;
     long long counter = 0;
-    while (!is.eof() && !is.bad() && !is.fail()) {
-        char c;
-        int d;
-        is >> c >> d;
-        assert(c == 'R' || c == 'L');
-        auto op = c == 'L' ? -1 : 1;
-        auto zeros = count_zeros(dial, op, d);
+    while (is) {
+        char rotation;
+        int change;
+        is >> rotation >> change;
+        if (!is) {
+            break;
+        }
+        assert(rotation == 'R' || rotation == 'L');
+        auto op = rotation == 'L' ? -1 : 1;
+        auto zeros = count_zeros(dial, op, change);
         counter += zeros;
-        dial = (dial + dial_buffer + op * d) % dial_ticks;
+        dial = (dial + dial_buffer + op * change) % dial_ticks;
     }
     return counter;
 }
 
 int main() {
-    auto short_vector = ispanstream{ R"(L68
+    auto short_vector = R"(L68
 L30
 R48
 L5
@@ -73,21 +80,15 @@ L55
 L1
 L99
 R14
-L82)"sv };
+L82)"sv;
     // https://adventofcode.com/2025/day/1/input
-    ifstream long_vector{ "input-vector.txt" };
+    static const auto file = "input-vector.txt";
 
-    cout << part1(short_vector) << endl;
-    cout << part1(long_vector) << endl;
+    cout << part1(ispanstream(short_vector)) << endl;
+    cout << part1(ifstream(file)) << endl;
 
-    short_vector.clear();
-    short_vector.seekg(0);
-
-    long_vector.clear();
-    long_vector.seekg(0);
-
-    cout << part2(short_vector) << endl;
-    cout << part2(long_vector) << endl;
+    cout << part2(ispanstream(short_vector)) << endl;
+    cout << part2(ifstream(file)) << endl;
 
     return 0;
 }
