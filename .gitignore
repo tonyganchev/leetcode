@@ -4,3 +4,4 @@ __pycache__
 *.vcxproj.filters
 *.vcxproj.user
 x64/
+input-vector.txt
