@@ -24,7 +24,7 @@ static auto part1(Stream is) {
         // pull the comma out
         is.get();
 
-        for (auto n = from; n <= to; n++) {
+        for (auto n : views::iota(from, to + 1)) {
             auto m = mag(n);
             if (m % 2 == 0) {
                 long long power = pow(10, m / 2);
@@ -49,9 +49,9 @@ static auto part2(Stream is) {
         // pull the comma out
         is.get();
 
-        for (auto n = from; n <= to; n++) {
+        for (auto n : views::iota(from, to + 1)) {
             auto m = mag(n);
-            for (auto k = 1; k <= m / 2; k++) {
+            for (auto k : views::iota(1, m / 2 + 1)) {
                 if (m % k != 0) {
                     continue;
                 }
