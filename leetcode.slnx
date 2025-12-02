@@ -4,5 +4,6 @@
     <Platform Name="x86" />
   </Configurations>
   <Project Path="advent-of-code/2025/aoc25-1/aoc25-1.vcxproj" Id="5f916a31-479e-4ece-a4df-626aaa646af0" />
+  <Project Path="advent-of-code/2025/aoc25-2/aoc25-2.vcxproj" Id="4bdc120d-b9b2-4c64-8f4d-fc1e3c876e78" />
   <Project Path="leetcode.vcxproj" Id="5d9b9c68-114f-4c64-b3d9-d474e8322cc6" />
 </Solution>
