@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  
+  <!-- This property group enables building the std modules themselves -->
+  <PropertyGroup>
+    <BuildStlModules>true</BuildStlModules>
+  </PropertyGroup>
+</Project>

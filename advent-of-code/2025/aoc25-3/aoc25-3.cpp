@@ -42,8 +42,5 @@ int main() {
     cout << part1(ifstream("input-vector.txt")) << endl;
     cout << part2(ispanstream(short_vector)) << endl;
     cout << part2(ifstream("input-vector.txt")) << endl;
-    /*
-    */
     return 0;
 }
-////

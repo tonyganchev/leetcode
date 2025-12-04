@@ -1,5 +1,3 @@
-// https://adventofcode.com/2025/day/1
-
 #include <cassert>
 
 import std;
@@ -9,7 +7,7 @@ using namespace std;
 static constexpr auto dial_ticks = 100;
 static constexpr auto dial_buffer = 10 * dial_ticks;
 
-// https://adventofcode.com/2025/day/1#part1
+// https://adventofcode.com/2025/day/1
 template <typename Stream>
 static auto part1(Stream is) {
     is >> skipws;

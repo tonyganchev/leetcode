@@ -3,15 +3,6 @@ import std;
 
 using namespace std;
 
-static auto mag(long long n) {
-    auto m = 0LL;
-    while (n > 0) {
-        m++;
-        n /= 10;
-    }
-    return m;
-}
-
 // https://adventofcode.com/2025/day/2
 template <typename Stream>
 static auto part1(Stream is) {
@@ -24,12 +15,28 @@ static auto part1(Stream is) {
         // pull the comma out
         is.get();
 
-        for (auto n : views::iota(from, to + 1)) {
-            auto m = mag(n);
-            if (m % 2 == 0) {
-                long long power = pow(10, m / 2);
-                if (n / power == n % power) {
-                    invalid_id_sum += n;
+        long long from_mag = ceil(log10(from));
+        if (from_mag % 2 == 1) {
+            from = pow(10, from_mag++);
+        }
+        long long to_mag = ceil(log10(to));
+        if (to_mag % 2 == 1) {
+            to = pow(10, --to_mag) - 1;
+        }
+        if (from > to) {
+            continue;
+        }
+
+        for (auto m = from_mag; m <= to_mag; m += 2) {
+            long long hp = pow(10, m / 2);
+
+            for (auto n = from / hp; ; n++) {
+                auto v = n * hp + n;
+                if (v > to) {
+                    break;
+                }
+                if (v >= from) {
+                    invalid_id_sum += v;
                 }
             }
         }
@@ -43,6 +50,7 @@ static auto part2(Stream is) {
     auto invalid_id_sum = 0LL;
 
     char dash;
+    auto checks = 0LL;
     long long from, to;
     while (is >> from >> dash >> to) {
         assert(dash == '-');
@@ -50,7 +58,7 @@ static auto part2(Stream is) {
         is.get();
 
         for (auto n : views::iota(from, to + 1)) {
-            auto m = mag(n);
+            long long m = ceil(log10(n));
             for (auto k : views::iota(1, m / 2 + 1)) {
                 if (m % k != 0) {
                     continue;
