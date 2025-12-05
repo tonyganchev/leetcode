@@ -67,7 +67,7 @@ static auto remove_free(vector<string>& grid) {
     return free_count;
 }
 
-// https://adventofcode.com/2025/day/3
+// https://adventofcode.com/2025/day/4
 template <typename Stream>
 static auto part1(Stream is) {
     vector<string> grid;
@@ -76,7 +76,7 @@ static auto part1(Stream is) {
     return remove_free(grid);
 }
 
-// https://adventofcode.com/2025/day/3#part2
+// https://adventofcode.com/2025/day/4#part2
 template <typename Stream>
 static auto part2(Stream is) {
     vector<string> grid;
