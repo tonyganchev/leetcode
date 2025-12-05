@@ -62,15 +62,6 @@ public:
 private:
     container_type ranges_;
 
-    iterator closest_left(bound_t needle) {
-        for (auto it = ranges_.begin(); it != ranges_.cend(); ++it) {
-            if (it->first > needle) {
-                return it == ranges_.begin() ? ranges_.end() : prev(it);
-            }
-        }
-        return ranges_.end();
-    }
-
     iterator find_(bound_t needle) {
         for (auto it = ranges_.begin(); it != ranges_.cend(); ++it) {
             if (it->first <= needle && needle <= it->second) {
