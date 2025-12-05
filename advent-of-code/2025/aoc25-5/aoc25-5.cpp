@@ -42,7 +42,7 @@ public:
     auto begin() {
         return ranges_.begin();
     }
-    
+
     auto cbegin() const {
         return ranges_.cbegin();
     }
@@ -50,7 +50,7 @@ public:
     auto end() {
         return ranges_.end();
     }
-    
+
     auto cend() const {
         return ranges_.cend();
     }
@@ -62,11 +62,23 @@ public:
 private:
     container_type ranges_;
 
-    iterator find_(bound_t needle) {
+    iterator old_find_(bound_t needle) {
         for (auto it = ranges_.begin(); it != ranges_.cend(); ++it) {
             if (it->first <= needle && needle <= it->second) {
                 return it;
             }
+        }
+        return ranges_.end();
+    }
+
+    iterator find_(bound_t needle) {
+        auto it = ranges_.upper_bound(needle);
+        if (it == ranges_.begin()) {
+            return ranges_.end();
+        }
+        --it;
+        if (it->second >= needle) {
+            return it;
         }
         return ranges_.end();
     }
@@ -114,7 +126,7 @@ static auto part2(Stream is) {
     return ranges::fold_left(rp, 0, [](long long cur_sum, const auto& p) {
         auto& [from, to] = p;
         return cur_sum + to - from + 1;
-    });
+        });
 }
 
 int main() {
