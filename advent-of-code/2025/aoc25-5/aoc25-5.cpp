@@ -1,6 +1,7 @@
 #include <cassert>
 
 import std;
+import utils;
 
 using namespace std;
 
@@ -86,13 +87,20 @@ private:
 
 template <typename Stream>
 static Stream& operator >>(Stream& is, range_pool& rp) {
-    is >> noskipws;
-    bound_t from;
-    while (is >> from) {
+    string line;
+    while (getline(is, line)) {
+        if (line.length() == 0) {
+            break;
+        }
+        istringstream iss(line);
+        bound_t from;
+        iss >> from;
+        if (iss.get() != '-') {
+            assert(false);
+            }
+
         bound_t to;
-        assert(is.get() == '-');
-        is >> to;
-        assert(is.get() == '\n');
+        iss >> to;
         rp.add(from, to);
     }
     return is;
@@ -101,12 +109,11 @@ static Stream& operator >>(Stream& is, range_pool& rp) {
 
 // https://adventofcode.com/2025/day/5
 template <typename Stream>
-static auto part1(Stream is) {
+static auto part1(Stream& is) {
+    timer_scope ts;
     range_pool rp;
     is >> rp;
-    is.clear();
-    is >> skipws;
-    bound_t id;
+    bound_t id = -1;
     auto invalid_count = 0LL;
     while (is >> id) {
         auto r = rp.find(id);
@@ -119,7 +126,8 @@ static auto part1(Stream is) {
 
 // https://adventofcode.com/2025/day/5#part2
 template <typename Stream>
-static auto part2(Stream is) {
+static auto part2(Stream& is) {
+    timer_scope ts;
     range_pool rp;
     is >> rp;
     static_assert(ranges::range<range_pool>);
@@ -141,9 +149,13 @@ int main() {
 11
 17
 32)"sv;
-    cout << part1(ispanstream(short_vector)) << endl;
-    cout << part1(ifstream("input-vector.txt")) << endl;
-    cout << part2(ispanstream(short_vector)) << endl;
-    cout << part2(ifstream("input-vector.txt")) << endl;
+    ispanstream sv1(short_vector);
+    cout << part1(sv1) << endl;
+    ifstream iv1("input-vector.txt");
+    cout << part1(iv1) << endl;
+    ispanstream sv2(short_vector);
+    cout << part2(sv2) << endl;
+    ifstream iv2("input-vector.txt");
+    cout << part2(iv2) << endl;
     return 0;
 }

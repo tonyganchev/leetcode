@@ -1,4 +1,5 @@
 import std;
+import utils;
 
 using namespace std;
 
@@ -24,12 +25,14 @@ static auto solve(Stream& is, const int count) {
 // https://adventofcode.com/2025/day/3
 template <typename Stream>
 static auto part1(Stream is) {
+    timer_scope ts;
     return solve(is, 2);
 }
 
 // https://adventofcode.com/2025/day/3#part2
 template <typename Stream>
 static auto part2(Stream is) {
+    timer_scope ts;
     return solve(is, 12);
 }
 

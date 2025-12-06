@@ -1,6 +1,7 @@
 #include <cassert>
 
 import std;
+import utils;
 
 using namespace std;
 
@@ -10,6 +11,8 @@ static constexpr auto dial_buffer = 10 * dial_ticks;
 // https://adventofcode.com/2025/day/1
 template <typename Stream>
 static auto part1(Stream is) {
+    timer_scope ts;
+
     is >> skipws;
     auto dial = 50;
     auto counter = 0;
@@ -46,6 +49,8 @@ static auto count_zeros(const int dial, const int op, const int change) {
 // https://adventofcode.com/2025/day/1#part2
 template <typename Stream>
 static auto part2(Stream is) {
+    timer_scope ts;
+
     is >> skipws;
     auto dial = 50;
     auto counter = 0;

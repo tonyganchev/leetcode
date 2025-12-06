@@ -1,4 +1,5 @@
 import std;
+import utils;
 
 using namespace std;
 
@@ -57,12 +58,9 @@ static auto remove_free(vector<string>& grid) {
             }
         }
     }
-    for (const auto [i, j] : to_remove) {
+    for (const auto& [i, j] : to_remove) {
         grid[i][j] = '.';
     }
-
-    ranges::copy(grid, ostream_iterator<string>(cout, "\n"));
-    cout << endl;
 
     return free_count;
 }
@@ -70,6 +68,7 @@ static auto remove_free(vector<string>& grid) {
 // https://adventofcode.com/2025/day/4
 template <typename Stream>
 static auto part1(Stream is) {
+    timer_scope ts;
     vector<string> grid;
     is >> grid;
 
@@ -79,6 +78,7 @@ static auto part1(Stream is) {
 // https://adventofcode.com/2025/day/4#part2
 template <typename Stream>
 static auto part2(Stream is) {
+    timer_scope ts;
     vector<string> grid;
     is >> grid;
 

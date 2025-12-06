@@ -1,11 +1,14 @@
 #include <cassert>
 import std;
+import utils;
 
 using namespace std;
 
 // https://adventofcode.com/2025/day/2
 template <typename Stream>
 static auto part1(Stream is) {
+    timer_scope ts;
+
     auto invalid_id_sum = 0LL;
 
     char dash;
@@ -47,6 +50,8 @@ static auto part1(Stream is) {
 // https://adventofcode.com/2025/day/2#part2
 template <typename Stream>
 static auto part2(Stream is) {
+    timer_scope ts;
+
     auto invalid_id_sum = 0LL;
 
     char dash;
