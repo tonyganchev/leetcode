@@ -9,7 +9,6 @@ template <typename Stream>
 Stream& operator >>(Stream& is, vector<string>& lines) {
     string line;
     while (getline(is, line)) {
-        //cout << line.length() << endl;
         line += " ";
         lines.push_back(move(line));
     }
@@ -33,28 +32,21 @@ static auto part1(Stream& is) {
         operands.back().reserve(1100);
         while (is >> n) {
             operands.back().push_back(n);
-            //cout << n << " -> " << operands.back().size() << endl;
         }
-        //ranges::copy(operands.back(), ostream_iterator<int>(cout, " "));
-        //cout << endl << endl;
     }
     ispanstream iss(lines.back());
     char op;
     auto total_results = 0LL;
-    //cout << "here " << operands.front().size() << endl;
     for (auto i : views::iota(0uz, operands.front().size())) {
         iss >> op;
-        //cout << op << " ";
         auto result = op == '+' ? 0LL : 1LL;
         for (const auto& l : operands) {
-            //cout << l[i] << " ";
             if (op == '+') {
                 result += l[i];
             } else {
                 result *= l[i];
             }
         }
-        //cout << "= " << result << endl;
         total_results += result;
     }
     return total_results;
