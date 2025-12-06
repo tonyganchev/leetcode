@@ -17,7 +17,7 @@ Stream& operator >>(Stream& is, vector<string>& lines) {
 
 // https://adventofcode.com/2025/day/6
 template <typename Stream>
-static auto part1(Stream& is) {
+static auto part1(Stream is) {
     timer_scope ts;
     vector<string> lines;
     lines.reserve(5);
@@ -54,7 +54,7 @@ static auto part1(Stream& is) {
 
 // https://adventofcode.com/2025/day/6#part2
 template <typename Stream>
-static auto part2(Stream& is) {
+static auto part2(Stream is) {
     timer_scope ts;
     vector<string> lines;
     lines.reserve(5);
@@ -98,13 +98,9 @@ int main() {
  45 64  387 23 
   6 98  215 314
 *   +   *   +  )"sv;
-    ispanstream sv1(short_vector);
-    cout << part1(sv1) << endl;
-    ifstream iv1("input-vector.txt");
-    cout << part1(iv1) << endl;
-    ispanstream sv2(short_vector);
-    cout << part2(sv2) << endl;
-    ifstream iv2("input-vector.txt");
-    cout << part2(iv2) << endl;
+    cout << part1(ispanstream(short_vector)) << endl;
+    cout << part1(ifstream("input-vector.txt")) << endl;
+    cout << part2(ispanstream(short_vector)) << endl;
+    cout << part2(ifstream("input-vector.txt")) << endl;
     return 0;
 }

@@ -87,6 +87,8 @@ private:
 
 template <typename Stream>
 static Stream& operator >>(Stream& is, range_pool& rp) {
+    timer_scope ts;
+
     string line;
     while (getline(is, line)) {
         if (line.length() == 0) {
@@ -97,7 +99,7 @@ static Stream& operator >>(Stream& is, range_pool& rp) {
         iss >> from;
         if (iss.get() != '-') {
             assert(false);
-            }
+        }
 
         bound_t to;
         iss >> to;
@@ -109,7 +111,7 @@ static Stream& operator >>(Stream& is, range_pool& rp) {
 
 // https://adventofcode.com/2025/day/5
 template <typename Stream>
-static auto part1(Stream& is) {
+static auto part1(Stream is) {
     timer_scope ts;
     range_pool rp;
     is >> rp;
@@ -126,7 +128,7 @@ static auto part1(Stream& is) {
 
 // https://adventofcode.com/2025/day/5#part2
 template <typename Stream>
-static auto part2(Stream& is) {
+static auto part2(Stream is) {
     timer_scope ts;
     range_pool rp;
     is >> rp;
@@ -149,13 +151,9 @@ int main() {
 11
 17
 32)"sv;
-    ispanstream sv1(short_vector);
-    cout << part1(sv1) << endl;
-    ifstream iv1("input-vector.txt");
-    cout << part1(iv1) << endl;
-    ispanstream sv2(short_vector);
-    cout << part2(sv2) << endl;
-    ifstream iv2("input-vector.txt");
-    cout << part2(iv2) << endl;
+    cout << part1(ispanstream(short_vector)) << endl;
+    cout << part1(ifstream("input-vector.txt")) << endl;
+    cout << part2(ispanstream(short_vector)) << endl;
+    cout << part2(ifstream("input-vector.txt")) << endl;
     return 0;
 }
