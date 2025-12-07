@@ -3,12 +3,19 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="D:/src/leetcode/advent-of-code/2025/aoc25-1/aoc25-1.vcxproj" Id="5f916a31-479e-4ece-a4df-626aaa646af0" />
-  <Project Path="D:/src/leetcode/advent-of-code/2025/aoc25-2/aoc25-2.vcxproj" Id="4bdc120d-b9b2-4c64-8f4d-fc1e3c876e78" />
-  <Project Path="D:/src/leetcode/advent-of-code/2025/aoc25-3/aoc25-3.vcxproj" Id="b27e4e49-8130-4a35-815d-07d29b6b01c9" />
-  <Project Path="D:/src/leetcode/advent-of-code/2025/aoc25-4/aoc25-4.vcxproj" Id="6569baef-1464-476a-845c-3f64a88cd30c" />
-  <Project Path="D:/src/leetcode/advent-of-code/2025/aoc25-5/aoc25-5.vcxproj" Id="44380a4d-56b7-4c16-b0c0-b0fb87042a22" />
-  <Project Path="D:/src/leetcode/advent-of-code/2025/aoc25-6/aoc25-6.vcxproj" Id="8d184581-b89b-483b-a928-6ff926485154" />
+  <Folder Name="/advent-of-code/" />
+  <Folder Name="/advent-of-code/2024/">
+    <Project Path="advent-of-code/2024/aoc24-10/aoc24-10.vcxproj" Id="18aca810-9df5-4768-9858-1e3eef3a0b6c" />
+  </Folder>
+  <Folder Name="/advent-of-code/2025/">
+    <Project Path="advent-of-code/2025/aoc25-7/aoc25-7.vcxproj" Id="80e1cad0-0789-46cd-89d6-ea586a1c4641" />
+    <Project Path="D:/src/leetcode/advent-of-code/2025/aoc25-1/aoc25-1.vcxproj" Id="5f916a31-479e-4ece-a4df-626aaa646af0" />
+    <Project Path="D:/src/leetcode/advent-of-code/2025/aoc25-2/aoc25-2.vcxproj" Id="4bdc120d-b9b2-4c64-8f4d-fc1e3c876e78" />
+    <Project Path="D:/src/leetcode/advent-of-code/2025/aoc25-3/aoc25-3.vcxproj" Id="b27e4e49-8130-4a35-815d-07d29b6b01c9" />
+    <Project Path="D:/src/leetcode/advent-of-code/2025/aoc25-4/aoc25-4.vcxproj" Id="6569baef-1464-476a-845c-3f64a88cd30c" />
+    <Project Path="D:/src/leetcode/advent-of-code/2025/aoc25-5/aoc25-5.vcxproj" Id="44380a4d-56b7-4c16-b0c0-b0fb87042a22" />
+    <Project Path="D:/src/leetcode/advent-of-code/2025/aoc25-6/aoc25-6.vcxproj" Id="8d184581-b89b-483b-a928-6ff926485154" />
+  </Folder>
   <Project Path="D:/src/leetcode/leetcode.vcxproj" Id="5d9b9c68-114f-4c64-b3d9-d474e8322cc6" />
   <Project Path="D:/src/leetcode/utils/utils.vcxproj" Id="a206daf2-d8d2-42a2-bb7e-a45a552de352" />
 </Solution>
