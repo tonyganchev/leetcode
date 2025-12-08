@@ -18,7 +18,7 @@ ostream& operator <<(ostream& os, const vector<string>& lines) {
 }
 
 
-// https://adventofcode.com/2024/day/10
+// https://adventofcode.com/2025/day/7
 template <typename Stream>
 static auto part1(Stream is) {
     timer_scope ts{ "part1" };
@@ -73,7 +73,7 @@ static auto paths_from(
     return v;
 }
 
-// https://adventofcode.com/2024/day/10#part2
+// https://adventofcode.com/2025/day/7#part2
 template <typename Stream>
 static auto part2(Stream is) {
     timer_scope ts{ "part2" };
