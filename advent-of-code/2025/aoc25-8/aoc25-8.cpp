@@ -53,36 +53,36 @@ struct fuses {
         greater<point_pair>
     > distances;
     
-    size_t cur_cirq;
+    size_t cur_circ;
     
-    unordered_map<long long, long long> cirquit_of;
+    unordered_map<long long, long long> circuit_of;
     
-    unordered_map<long long, unordered_set<long long>> cirquit_points;
+    unordered_map<long long, unordered_set<long long>> circuit_points;
     
-    fuses() : cur_cirq(1z) {}
+    fuses() : cur_circ(1z) {}
 
     void connect(const point_pair& pp) {
         const auto& [from, to, _] = pp;
-        auto& new_cirquit = cirquit_of[from];
-        if (new_cirquit == 0) {
-            new_cirquit = cur_cirq++;
-            cirquit_points[new_cirquit].insert(from);
+        auto& new_circuit = circuit_of[from];
+        if (new_circuit == 0) {
+            new_circuit = cur_circ++;
+            circuit_points[new_circuit].insert(from);
         }
-        const auto old_cirquit = cirquit_of[to];
-        if (old_cirquit != new_cirquit) {
-            for (auto& pt : cirquit_points[old_cirquit]) {
-                cirquit_of[pt] = new_cirquit;
-                cirquit_points[new_cirquit].insert(pt);
+        const auto old_circuit = circuit_of[to];
+        if (old_circuit != new_circuit) {
+            for (auto& pt : circuit_points[old_circuit]) {
+                circuit_of[pt] = new_circuit;
+                circuit_points[new_circuit].insert(pt);
             }
-            cirquit_points.erase(old_cirquit);
-            cirquit_of[to] = new_cirquit;
-            cirquit_points[new_cirquit].insert(to);
+            circuit_points.erase(old_circuit);
+            circuit_of[to] = new_circuit;
+            circuit_points[new_circuit].insert(to);
         }
     }
 
     bool all_connected() const {
-        return cirquit_points.size() == 1
-            && cirquit_points.cbegin()->second.size() == points.size();
+        return circuit_points.size() == 1
+            && circuit_points.cbegin()->second.size() == points.size();
     }
 };
 
@@ -113,21 +113,21 @@ static auto part1(Stream is, size_t pair_count) {
         f.distances.pop();
     }
 
-    auto comp_cirq_sizes = [&f](const long long l, const long long r) {
-        return f.cirquit_points[l].size() < f.cirquit_points[r].size();
+    auto comp_circ_sizes = [&f](const long long l, const long long r) {
+        return f.circuit_points[l].size() < f.circuit_points[r].size();
         };
-    const auto cirquit_ids = f.cirquit_points | views::keys;
+    const auto circuit_ids = f.circuit_points | views::keys;
     priority_queue<
         long long,
         vector<long long>,
-        decltype(comp_cirq_sizes)
-    > largest_cirquits(
-        cirquit_ids.cbegin(), cirquit_ids.cend(), comp_cirq_sizes);
+        decltype(comp_circ_sizes)
+    > largest_circuits(
+        circuit_ids.cbegin(), circuit_ids.cend(), comp_circ_sizes);
 
     auto result = 1LL;
-    for (auto i : views::iota(0uz, min(3uz, largest_cirquits.size()))) {
-        result *= f.cirquit_points[largest_cirquits.top()].size();
-        largest_cirquits.pop();
+    for (auto i : views::iota(0uz, min(3uz, largest_circuits.size()))) {
+        result *= f.circuit_points[largest_circuits.top()].size();
+        largest_circuits.pop();
     }
     return result;
 }
