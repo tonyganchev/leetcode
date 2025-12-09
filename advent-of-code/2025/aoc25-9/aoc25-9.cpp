@@ -13,12 +13,6 @@ static auto part1(Stream is) {
     return n == 7 ? 50LL : 4738108384LL;
 }
 
-struct gigapixel {
-    char c;
-    int w;
-    int h;
-};
-
 // Structure to hold the details of a segment to be processed
 struct flood_fill_segment {
     int row;
@@ -26,14 +20,14 @@ struct flood_fill_segment {
     int right_col;
 };
 
-void flood_fill(vector<vector<gigapixel>>& grid, int i, int j) {
+void flood_fill(vector<string>& grid, int i, int j) {
     timer_scope ts_ff("flood fill");
     const auto replacement_char = '*';
 
     int height = grid.size();
     int width = grid[0].size();
 
-    char target_char = grid[i][j].c;
+    char target_char = grid[i][j];
 
     // Use a stack (LIFO) for the Scanline approach
     // We start with the seed point as a zero-length segment
@@ -56,21 +50,21 @@ void flood_fill(vector<vector<gigapixel>>& grid, int i, int j) {
 
         // 1. Expand Left (find cl)
         int cl = c_start;
-        while (cl >= 0 && grid[r][cl].c == target_char) {
+        while (cl >= 0 && grid[r][cl] == target_char) {
             cl--;
         }
         cl++; // cl is the first column with target_char
 
         // 2. Expand Right (find cr)
         int cr = c_start;
-        while (cr < width && grid[r][cr].c == target_char) {
+        while (cr < width && grid[r][cr] == target_char) {
             cr++;
         }
         cr--; // cr is the last column with target_char
 
         // Check if the area was already filled by a previous segment in the same row
         // This is a crucial optimization to avoid redundant processing
-        if (grid[r][c_start].c != target_char) {
+        if (grid[r][c_start] != target_char) {
             continue; // Already processed
         }
 
@@ -78,7 +72,7 @@ void flood_fill(vector<vector<gigapixel>>& grid, int i, int j) {
 
         // 3. Fill the segment in the current row (r)
         for (int c = cl; c <= cr; ++c) {
-            grid[r][c].c = replacement_char;
+            grid[r][c] = replacement_char;
         }
 
         // 4. Check Scanlines Above and Below (r+1 and r-1)
@@ -97,11 +91,11 @@ void flood_fill(vector<vector<gigapixel>>& grid, int i, int j) {
             int c = cl;
             while (c <= cr) {
                 // Look for the target character in the neighbor row (nr)
-                if (grid[nr][c].c == target_char) {
+                if (grid[nr][c] == target_char) {
                     // Found a new potential segment! Find its right boundary.
                     int segment_end = c;
                     while (segment_end + 1 <= cr
-                        && grid[nr][segment_end + 1].c == target_char) {
+                        && grid[nr][segment_end + 1] == target_char) {
 
                         segment_end++;
                     }
@@ -145,49 +139,13 @@ static auto part2(Stream is) {
     unordered_map<int, int> row_giga;
     unordered_map<int, int> col_giga;
 
-    vector<vector<gigapixel>> grid;
-    grid.reserve(rows.size() * 2 + 1);
-    auto pr = 0;
-    auto pc = 0;
-    for (auto r : rows) {
-
-        // tall blocks before the line block row
-        grid.emplace_back();
-        grid.back().reserve(cols.size() * 2 + 1);
-        pc = 0;
-        for (auto c : cols) {
-            grid.back().emplace_back('.', c - pc, r - pr);
-            col_giga[c] = grid.back().size();
-            grid.back().emplace_back('.', 1, r - pr);
-            pc = c + 1;
-        }
-        grid.back().emplace_back('.', 1, r - pr);
-
-        // line block row
-        row_giga[r] = grid.size();
-        grid.emplace_back();
-        grid.back().reserve(cols.size() * 2 + 1);
-        pc = 0;
-        for (auto c : cols) {
-            grid.back().emplace_back('.', c - pc, 1);
-            grid.back().emplace_back('.', 1, 1);
-            pc = c + 1;
-        }
-        grid.back().emplace_back('.', 1, 1);
-
-        pr = r + 1;
+    vector<string> grid(rows.size() * 2 + 1, string(cols.size() * 2 + 1, '.'));
+    for (auto [i, r] : rows | views::enumerate) {
+        row_giga[r] = 2 * i + 1;  
     }
-    // final empty block row
-    grid.emplace_back();
-    grid.back().reserve(cols.size() * 2 + 1);
-    pc = 0;
-    for (auto c : cols) {
-        grid.back().emplace_back('.', c - pc, 1);
-        grid.back().emplace_back('.', 1, 1);
-        pc = c + 1;
+    for (auto [i, c] : cols | views::enumerate) {
+        col_giga[c] = 2 * i + 1;
     }
-    grid.back().emplace_back('.', 1, 1);
-
 
     {
         timer_scope ts_shift("shift and line green");
@@ -196,34 +154,29 @@ static auto part2(Stream is) {
             auto& [x, y] = red_tiles[i];
             auto xg = col_giga[x];
             auto yg = row_giga[y];
-            grid[yg][xg].c = '#';
+            grid[yg][xg] = '#';
             auto [px, py] =
                 red_tiles[(i + red_tiles.size() - 1) % red_tiles.size()];
             auto pxg = col_giga[px];
             auto pyg = row_giga[py];
             for (auto cxg : views::iota(min(xg, pxg), max(xg, pxg) + 1)) {
                 for (auto cyg : views::iota(min(yg, pyg), max(yg, pyg) + 1)) {
-                    if (grid[cyg][cxg].c == '.') {
-                        grid[cyg][cxg].c = 'X';
+                    if (grid[cyg][cxg] == '.') {
+                        grid[cyg][cxg] = 'X';
                     }
                 }
             }
         }
     }
 
-    flood_fill(grid, 0, 0);
 #if false
     {
         timer_scope ts_dump("dump");
         ofstream os("dump.txt");
-        for (const auto& row : grid) {
-            for (auto [c, w, h] : row) {
-                os << c;
-            }
-            os << endl;
-        }
+        ranges::copy(grid, ostream_iterator<string>(os, "\n"));
     }
 #endif
+    flood_fill(grid, 0, 0);
     auto max_area = 0LL;
     for (auto it = red_tiles.cbegin(); it != prev(red_tiles.cend()); ++it) {
         const auto& [fx, fy] = *it;
@@ -243,7 +196,7 @@ static auto part2(Stream is) {
             }
             bool inside = true;
             for (auto j : views::iota(min(fxg, txg), max(fxg, txg) + 1)) {
-                if (grid[min(fyg, tyg)][j].c == '*' || grid[max(fyg, tyg)][j].c == '*') {
+                if (grid[min(fyg, tyg)][j] == '*' || grid[max(fyg, tyg)][j] == '*') {
                     inside = false;
                     break;
                 }
@@ -252,7 +205,7 @@ static auto part2(Stream is) {
                 continue;
             }
             for (auto i : views::iota(min(fyg, tyg), max(fyg, tyg) + 1)) {
-                if (grid[i][min(fxg, txg)].c == '*' || grid[i][max(fxg, txg)].c == '*') {
+                if (grid[i][min(fxg, txg)] == '*' || grid[i][max(fxg, txg)] == '*') {
                     inside = false;
                     break;
                 }
@@ -274,8 +227,8 @@ int main() {
 2,5
 2,3
 7,3)"sv;
-    //cout << part1(ispanstream(short_vector), 10) << endl;
-    //cout << part1(ifstream("input-vector.txt"), 1000) << endl;
+    cout << part1(ispanstream(short_vector), 10) << endl;
+    cout << part1(ifstream("input-vector.txt"), 1000) << endl;
     cout << part2(ispanstream(short_vector)) << endl;
     cout << part2(ifstream("input-vector.txt")) << endl;
     return 0;
