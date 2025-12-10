@@ -43,24 +43,34 @@ static auto find_minimum_presses(
     const lamps_t current_lamps,
     const lamps_t desired_lamps,
     unordered_set<lamps_t>& passed_lamps,
-    const vector<lamp_mask_t>& button_effects) {
+    const vector<lamp_mask_t>& button_effects,
+    size_t best_so_far) {
 
-    auto min_presses = numeric_limits<long long>::max() - 1;
+    if (passed_lamps.size() >= best_so_far) {
+        return best_so_far;
+    }
+
+    if (current_lamps == desired_lamps) {
+        return passed_lamps.size();
+    }
+
+    auto min_presses = numeric_limits<long long>::max();
     for (const auto& be : button_effects) {
         lamps_t new_lamps = press_button(current_lamps, be);
-        if (new_lamps == desired_lamps) {
-            return 1LL;
-        }
         if (!passed_lamps.contains(new_lamps)) {
             passed_lamps.insert(new_lamps);
-            auto p = 1 + find_minimum_presses(
-                new_lamps, desired_lamps, passed_lamps, button_effects);
-            min_presses = min(min_presses, p);
+            auto r = find_minimum_presses(
+                new_lamps,
+                desired_lamps,
+                passed_lamps,
+                button_effects,
+                best_so_far);
+            best_so_far = min(best_so_far, r);
             passed_lamps.erase(new_lamps);
         }
     }
 
-    return min_presses;
+    return best_so_far;
 }
 
 // https://adventofcode.com/2025/day/10
@@ -83,13 +93,61 @@ static auto part1(Stream is) {
             is >> c;
             if (c == '{') {
                 assert(passed_lamps.size() == 0);
+                cout << "--------------------------------------------------\n";
+                timer_scope ts_run(lamps.c_str());
+
+                auto desired_lamps = encode_lamps(lamps);
+                auto collateral_lamps = 0u;
+
+                vector<lamp_mask_t> narrowed_button_effects;
+                bool modified = true;
+                while (modified) {
+                    modified = false;
+                    for (auto it = button_effects.begin();
+                        it != button_effects.end();
+                        ++it) {
+
+                        if (*it == desired_lamps) {
+                            // we don't need to test with anything but this map
+                            // and the result will automatically be 1.
+
+                            // clear the list of buttons and only leave the
+                            // current one.
+                            narrowed_button_effects.clear();
+                            narrowed_button_effects.push_back(*it);
+                            // exit the outer loop.
+                            modified = false;
+                            break;
+                        } else {
+                            auto desired_and = (desired_lamps & *it);
+                            auto collateral_and = (collateral_lamps & *it);
+                            if (desired_and != 0 || collateral_lamps != 0) {
+                                // the button touches at least one of the
+                                // desired lamps or the other lambs touched by
+                                // previously-selected buttons.
+                                collateral_lamps |= *it & ~desired_lamps;
+                                narrowed_button_effects.push_back(*it);
+                                button_effects.erase(it);
+                                modified = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (button_effects.size() > 0) {
+                    cout << "  optimized away " << button_effects.size()
+                        << " button(s).\n";
+                }
+
                 auto r = find_minimum_presses(
                     0u,
-                    encode_lamps(lamps),
+                    desired_lamps,
                     passed_lamps,
-                    button_effects);
+                    narrowed_button_effects,
+                    numeric_limits<size_t>::max());
                 assert(passed_lamps.size() == 0);
-                cout << lamps << ": " << r << endl;
+                cout << r << endl;
                 result += r;
                 string remainder;
                 getline(is, remainder);
@@ -116,12 +174,13 @@ static auto part2(Stream is) {
 }
 
 int main() {
+    cout.imbue(locale(""));
     auto short_vector = R"([.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
 [...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}
 [.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5})"sv;
     cout << part1(ispanstream(short_vector)) << endl;
-     cout << part1(ifstream("input-vector.txt")) << endl;
-    // cout << part2(ispanstream(short_vector)) << endl;
-    // cout << part2(ifstream("input-vector.txt")) << endl;
+    cout << part1(ifstream("input-vector.txt")) << endl;
+    //cout << part2(ispanstream(short_vector)) << endl;
+    //cout << part2(ifstream("input-vector.txt")) << endl;
     return 0;
 }

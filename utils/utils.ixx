@@ -16,7 +16,9 @@ public:
     }
     ~timer_scope() {
         auto duration = chrono::high_resolution_clock::now() - start_;
-        cout << label_ << ": " << duration << endl;
+        cout << label_ << ": "
+            << chrono::duration_cast<chrono::microseconds>(duration)
+            << endl;
     }
 private:
     const string label_;
