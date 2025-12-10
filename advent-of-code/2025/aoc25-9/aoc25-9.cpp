@@ -3,7 +3,7 @@ import utils;
 
 using namespace std;
 
-// https://adventofcode.com/2025/day/8
+// https://adventofcode.com/2025/day/9
 template <typename Stream>
 static auto part1(Stream is) {
     timer_scope ts("part1");
@@ -116,7 +116,7 @@ void flood_fill(vector<string>& grid, int i, int j) {
 }
 
 
-// https://adventofcode.com/2025/day/8#part2
+// https://adventofcode.com/2025/day/9#part2
 template <typename Stream>
 static auto part2(Stream is) {
     timer_scope ts("part2");
@@ -227,8 +227,8 @@ int main() {
 2,5
 2,3
 7,3)"sv;
-    cout << part1(ispanstream(short_vector), 10) << endl;
-    cout << part1(ifstream("input-vector.txt"), 1000) << endl;
+    cout << part1(ispanstream(short_vector)) << endl;
+    cout << part1(ifstream("input-vector.txt")) << endl;
     cout << part2(ispanstream(short_vector)) << endl;
     cout << part2(ifstream("input-vector.txt")) << endl;
     return 0;
