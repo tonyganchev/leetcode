@@ -9,6 +9,7 @@
   </Folder>
   <Folder Name="/advent-of-code/2025/">
     <Project Path="advent-of-code/2025/aoc25-10/aoc25-10.vcxproj" Id="9ed251e7-2747-436f-9d87-2728aba25f3f" />
+    <Project Path="advent-of-code/2025/aoc25-11/aoc25-11.vcxproj" Id="b7d15731-f65b-4553-baec-2afeefc76a4d" />
     <Project Path="advent-of-code/2025/aoc25-7/aoc25-7.vcxproj" Id="80e1cad0-0789-46cd-89d6-ea586a1c4641" />
     <Project Path="advent-of-code/2025/aoc25-8/aoc25-8.vcxproj" Id="acce2542-a042-4739-9a55-0987c1b290d9" />
     <Project Path="advent-of-code/2025/aoc25-9/aoc25-9.vcxproj" Id="dd8d9f23-e8cc-4c1d-969c-5f3ad4add750" />

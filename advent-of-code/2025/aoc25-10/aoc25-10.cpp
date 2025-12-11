@@ -16,7 +16,7 @@ static inline auto encode_lamps(const string& decoded_lamps) {
     return encoded_lamps;
 }
 
-static inline auto encode_button_effects(
+static inline auto encode_button_effects_for_lamps(
     const vector<int>& decoded_button_effects) {
 
     lamp_mask_t encoded_button_effects = 0u;
@@ -35,11 +35,14 @@ static inline auto decode_lamps(lamps_t encoded_lamps) {
     return s;
 }
 
-lamps_t press_button(const lamps_t lamps, const lamp_mask_t button_effects) {
+lamps_t press_button_for_lamps(
+    const lamps_t lamps,
+    const lamp_mask_t button_effects) {
+
     return lamps ^ button_effects;
 }
 
-static auto find_minimum_presses(
+static auto find_minimum_presses_for_lamps(
     const lamps_t current_lamps,
     const lamps_t desired_lamps,
     unordered_set<lamps_t>& passed_lamps,
@@ -56,10 +59,10 @@ static auto find_minimum_presses(
 
     auto min_presses = numeric_limits<long long>::max();
     for (const auto& be : button_effects) {
-        lamps_t new_lamps = press_button(current_lamps, be);
+        lamps_t new_lamps = press_button_for_lamps(current_lamps, be);
         if (!passed_lamps.contains(new_lamps)) {
             passed_lamps.insert(new_lamps);
-            auto r = find_minimum_presses(
+            auto r = find_minimum_presses_for_lamps(
                 new_lamps,
                 desired_lamps,
                 passed_lamps,
@@ -140,7 +143,7 @@ static auto part1(Stream is) {
                         << " button(s).\n";
                 }
 
-                auto r = find_minimum_presses(
+                auto r = find_minimum_presses_for_lamps(
                     0u,
                     desired_lamps,
                     passed_lamps,
@@ -149,6 +152,7 @@ static auto part1(Stream is) {
                 assert(passed_lamps.size() == 0);
                 cout << r << endl;
                 result += r;
+                // we do not care about joltage in part 1.
                 string remainder;
                 getline(is, remainder);
                 break;
@@ -160,17 +164,110 @@ static auto part1(Stream is) {
                 is >> n >> c;
                 be.push_back(n);
             }
-            button_effects.push_back(encode_button_effects(be));
+            button_effects.push_back(encode_button_effects_for_lamps(be));
         }
     }
     throw new exception("should never reach this point");
 }
 
+static auto find_minimum_presses_for_joltage(
+    vector<int>& current_joltage,
+    const vector<int>& desired_joltage,
+    size_t current_presses,
+    const vector<vector<int>>& button_effects,
+    size_t best_so_far) {
+
+    if (current_presses >= best_so_far) {
+        return best_so_far;
+    }
+
+    bool matched = true;
+    for (auto i : views::iota(0uz, current_joltage.size())) {
+        auto d = current_joltage[i] - desired_joltage[i];
+        if (d < 0) {
+            // we have lamps at a lower voltage than desired and we need to
+            // press more buttons.
+            matched = false;
+        } else if (d > 0) {
+            // this branch is a no-go since one lamp's joltage exceeded the
+            // target one.
+            return best_so_far;
+        }
+    }
+
+    if (matched) {
+        return current_presses;
+    }
+
+    for (const auto& be : button_effects) {
+        for (auto j : be) {
+            current_joltage[j]++;
+        }
+        auto r = find_minimum_presses_for_joltage(
+            current_joltage,
+            desired_joltage,
+            current_presses + 1uz,
+            button_effects,
+            best_so_far);
+        best_so_far = min(best_so_far, r);
+        for (auto j : be) {
+            current_joltage[j]--;
+        }
+    }
+
+    return best_so_far;
+}
+
 // https://adventofcode.com/2025/day/10#part2
 template <typename Stream>
 static auto part2(Stream is) {
-    timer_scope ts("part1");
-    return 0;
+    timer_scope ts("part2");
+    char c;
+    auto result = 0LL;
+    auto cn = -1;
+    while (true) {
+        cn++;
+        is >> c;
+        if (!is) {
+            return result;
+        }
+        assert(c == '[');
+        // we do not care about lamps in part 2.
+        string lamps;
+        getline(is, lamps, ']');
+
+        vector<vector<int>> button_effects;
+        while (true) {
+            is >> c;
+            if (c == '{') {
+                vector<int> joltage;
+                while (c != '}') {
+                    int n;
+                    is >> n >> c;
+                    joltage.push_back(n);
+                }
+                vector<int> current_joltage(joltage.size(), 0);
+                auto r = find_minimum_presses_for_joltage(
+                    current_joltage,
+                    joltage,
+                    0,
+                    button_effects,
+                    numeric_limits<size_t>::max()
+                );
+                cout << cn << ": " << r << endl;
+                result += r;
+                break;
+            }
+            assert(c == '(');
+            button_effects.emplace_back();
+            while (c != ')') {
+                int n;
+                is >> n >> c;
+                button_effects.back().push_back(n);
+            }
+        }
+    }
+    throw new exception("should never reach this point");
 }
 
 int main() {
@@ -178,9 +275,9 @@ int main() {
     auto short_vector = R"([.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
 [...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}
 [.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5})"sv;
-    cout << part1(ispanstream(short_vector)) << endl;
-    cout << part1(ifstream("input-vector.txt")) << endl;
+    //cout << part1(ispanstream(short_vector)) << endl;
+    //cout << part1(ifstream("input-vector.txt")) << endl;
     //cout << part2(ispanstream(short_vector)) << endl;
-    //cout << part2(ifstream("input-vector.txt")) << endl;
+    cout << part2(ifstream("input-vector.txt")) << endl;
     return 0;
 }
