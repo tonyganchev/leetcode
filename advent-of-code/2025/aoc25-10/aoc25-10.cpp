@@ -8,6 +8,19 @@ using namespace std;
 using lamps_t = unsigned;
 using lamp_mask_t = unsigned;
 
+namespace std {
+    template<>
+    struct hash<vector<int>> {
+        size_t operator ()(const vector<int>& v) const noexcept {
+            auto r = v.size();
+            for (auto n : v) {
+                r ^= n + 0x9e3779b9 + (r << 6) + (r >> 2);
+            }
+            return r;
+        }
+    };
+}
+
 static inline auto encode_lamps(const string& decoded_lamps) {
     lamps_t encoded_lamps = 0u;
     for (auto c : decoded_lamps | views::reverse) {
@@ -173,13 +186,16 @@ static auto part1(Stream is) {
 static auto find_minimum_presses_for_joltage(
     vector<int>& current_joltage,
     const vector<int>& desired_joltage,
-    size_t current_presses,
     const vector<vector<int>>& button_effects,
-    size_t best_so_far) {
+    unordered_map<vector<int>, size_t>& cache) {
 
-    if (current_presses >= best_so_far) {
-        return best_so_far;
+    auto it = cache.find(current_joltage);
+    if (it != cache.end()) {
+        return it->second;
     }
+
+    auto& cch = cache[current_joltage];
+    cch = numeric_limits<size_t>::max();
 
     bool matched = true;
     for (auto i : views::iota(0uz, current_joltage.size())) {
@@ -191,31 +207,36 @@ static auto find_minimum_presses_for_joltage(
         } else if (d > 0) {
             // this branch is a no-go since one lamp's joltage exceeded the
             // target one.
-            return best_so_far;
+            return cch;
         }
     }
 
     if (matched) {
-        return current_presses;
-    }
-
-    for (const auto& be : button_effects) {
-        for (auto j : be) {
-            current_joltage[j]++;
+        cch = 0;
+    } else {
+        for (const auto& be : button_effects) {
+            for (auto j : be) {
+                current_joltage[j]++;
+            }
+            auto r = find_minimum_presses_for_joltage(
+                current_joltage,
+                desired_joltage,
+                button_effects,
+                cache);
+            if (r < cch) {
+                cch = r + 1;
+            }
+            for (auto j : be) {
+                current_joltage[j]--;
+            }
         }
-        auto r = find_minimum_presses_for_joltage(
-            current_joltage,
-            desired_joltage,
-            current_presses + 1uz,
-            button_effects,
-            best_so_far);
-        best_so_far = min(best_so_far, r);
-        for (auto j : be) {
-            current_joltage[j]--;
-        }
     }
-
-    return best_so_far;
+//    if (cch < numeric_limits<size_t>::max()) {
+//        cout << "    ";
+//        ranges::copy(current_joltage, ostream_iterator<int>(cout, ","));
+//        cout << " -> " << cch << endl;
+//    }
+    return cch;
 }
 
 // https://adventofcode.com/2025/day/10#part2
@@ -246,13 +267,44 @@ static auto part2(Stream is) {
                     is >> n >> c;
                     joltage.push_back(n);
                 }
+
+                vector<unordered_set<int>> affected_joltages(
+                    joltage.size(), {});
+                for (const auto& [i, be] : button_effects | views::enumerate) {
+                    for (auto ji : be) {
+                        affected_joltages[ji].insert(i);
+                    }
+                }
+
+                auto r0 = 0uz;
+                vector<int> buttons_to_remove;
+                for (const auto& [ji, bis]
+                    : affected_joltages | views::enumerate) {
+
+                    if (bis.size() == 1) {
+                        auto bi = *bis.cbegin();
+                        auto d = joltage[ji];
+                        r0 += d;
+                        for (auto be : button_effects[bi]) {
+                            joltage[be] -= d;
+                        }
+                        buttons_to_remove.push_back(bi);
+                    }
+                }
+                ranges::sort(buttons_to_remove);
+                ranges::reverse(buttons_to_remove);
+                for (auto bi : buttons_to_remove) {
+                    button_effects.erase(button_effects.begin() + bi);
+                }
+                cout << "  " << r0
+                    << " / " << buttons_to_remove.size() << endl;
                 vector<int> current_joltage(joltage.size(), 0);
-                auto r = find_minimum_presses_for_joltage(
+                unordered_map<vector<int>, size_t> cache;
+                auto r = r0 + find_minimum_presses_for_joltage(
                     current_joltage,
                     joltage,
-                    0,
                     button_effects,
-                    numeric_limits<size_t>::max()
+                    cache
                 );
                 cout << cn << ": " << r << endl;
                 result += r;
@@ -277,7 +329,9 @@ int main() {
 [.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5})"sv;
     //cout << part1(ispanstream(short_vector)) << endl;
     //cout << part1(ifstream("input-vector.txt")) << endl;
-    //cout << part2(ispanstream(short_vector)) << endl;
+    //cout << part2(ispanstream("[.##.] (2) (3) {0,1,0,1}"sv)) << endl;
+    //cout << part2(ispanstream("[.##.] (3) {0,0,0,1}"sv)) << endl;
+    cout << part2(ispanstream(short_vector)) << endl;
     cout << part2(ifstream("input-vector.txt")) << endl;
     return 0;
 }
