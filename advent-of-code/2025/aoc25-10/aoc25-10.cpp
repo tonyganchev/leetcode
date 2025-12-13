@@ -1,4 +1,5 @@
 #include <cassert>
+#include <Eigen/Dense>
 
 import std;
 import utils;
@@ -183,154 +184,179 @@ static auto part1(Stream is) {
     throw new exception("should never reach this point");
 }
 
-static auto find_minimum_presses_for_joltage(
-    vector<int>& current_joltage,
-    const vector<int>& desired_joltage,
-    const vector<vector<int>>& button_effects,
-    unordered_map<vector<int>, size_t>& cache) {
+static const double epsilon = 1e-9;
 
-    auto it = cache.find(current_joltage);
-    if (it != cache.end()) {
-        return it->second;
+// Function to check if a double is effectively an integer within tolerance
+bool is_effectively_integer(double val) {
+    return std::abs(val - std::round(val)) < epsilon;
+}
+
+// Function that recursively explores parameter combinations
+void find_optimal_solution_recursive(
+    int param_index,
+    int num_params,
+    Eigen::VectorXd current_params_d,
+    const Eigen::VectorXd& particular_solution,
+    const Eigen::MatrixXd& kernel,
+    double& best_sum_out,
+    Eigen::VectorXd& best_solution_out_d,
+    bool& found_solution_out
+) {
+    if (param_index == num_params) {
+        Eigen::VectorXd current_x = particular_solution;
+        for (int i = 0; i < num_params; ++i) {
+            current_x += current_params_d[i] * kernel.col(i);
+        }
+
+        bool all_valid = true;
+        for (int i = 0; i < current_x.size(); ++i) {
+            double val = current_x[i];
+            if (val < -epsilon || !is_effectively_integer(val)) {
+                all_valid = false;
+                break;
+            }
+        }
+
+        if (all_valid) {
+            double current_sum = current_x.sum();
+            if (current_sum < best_sum_out) {
+                best_sum_out = current_sum;
+                best_solution_out_d = current_x;
+                found_solution_out = true;
+            }
+        }
+        return;
     }
 
-    auto& cch = cache[current_joltage];
-    cch = numeric_limits<size_t>::max();
+    int lower_bound = 0;
+    // Determined based on max input joltage.
+    int upper_bound = 266;
 
-    bool matched = true;
-    for (auto i : views::iota(0uz, current_joltage.size())) {
-        auto d = current_joltage[i] - desired_joltage[i];
-        if (d < 0) {
-            // we have lamps at a lower voltage than desired and we need to
-            // press more buttons.
-            matched = false;
-        } else if (d > 0) {
-            // this branch is a no-go since one lamp's joltage exceeded the
-            // target one.
-            return cch;
+    for (int p_val = lower_bound; p_val <= upper_bound; ++p_val) {
+        current_params_d[param_index] = static_cast<double>(p_val);
+        find_optimal_solution_recursive(param_index + 1, num_params, current_params_d,
+            particular_solution, kernel,
+            best_sum_out, best_solution_out_d, found_solution_out);
+    }
+}
+
+static auto run_simulation(const string line) {
+    auto raw_items = string_view(line) | views::split(' ');
+    vector<unordered_set<int>> button_effects;
+    vector<int> joltage;
+    for (const auto& item : raw_items) {
+        if (item.front() == '[') {
+            // we do not care about lamps in part 2.
+            continue;
+        }
+
+        if (item.front() == '(') {
+            ispanstream is(item);
+            char c;
+            is >> c;
+            assert(c == '(');
+            button_effects.emplace_back();
+            int n;
+            while (is >> n >> c) {
+                button_effects.back().insert(n);
+            }
+        } else {
+            ispanstream is(item);
+            char c;
+            is >> c;
+            int n;
+            while (is >> n >> c) {
+                joltage.push_back(n);
+            }
         }
     }
 
-    if (matched) {
-        cch = 0;
+    Eigen::MatrixXd left(joltage.size(), button_effects.size());
+    Eigen::VectorXd right(joltage.size());
+
+    for (const auto [ji, jv] : joltage | views::enumerate) {
+        for (const auto& [bi, bv] : button_effects | views::enumerate) {
+            left(ji, bi) = (bv.contains(ji) ? 1 : 0);
+        }
+        right[ji] = jv;
+    }
+
+    auto lu_decomp = left.fullPivLu();
+
+    if (!lu_decomp.isInvertible())
+    {
+        auto rank = lu_decomp.rank();
+        auto nullity = button_effects.size() - rank;
+        
+        auto kernel = lu_decomp.kernel();
+        
+        auto particular_solution = lu_decomp.solve(right);
+        
+        int num_parameters = kernel.cols();
+        Eigen::VectorXd initial_params = Eigen::VectorXd::Zero(num_parameters);
+
+        double best_sum = std::numeric_limits<double>::max();
+        Eigen::VectorXd final_best_solution_d;
+        bool found_solution = false;
+
+        find_optimal_solution_recursive(0, num_parameters, initial_params,
+            particular_solution, kernel,
+            best_sum, final_best_solution_d, found_solution);
+
+        if (found_solution) {
+            return best_sum;
+        }
+        
+        return 0.0 + numeric_limits<size_t>::max();
+
     } else {
-        for (const auto& be : button_effects) {
-            for (auto j : be) {
-                current_joltage[j]++;
-            }
-            auto r = find_minimum_presses_for_joltage(
-                current_joltage,
-                desired_joltage,
-                button_effects,
-                cache);
-            if (r < cch) {
-                cch = r + 1;
-            }
-            for (auto j : be) {
-                current_joltage[j]--;
-            }
-        }
+        Eigen::VectorXd coeffs = lu_decomp.solve(right);
+        assert(coeffs.size() == button_effects.size());
+
+        return coeffs.sum();
     }
-//    if (cch < numeric_limits<size_t>::max()) {
-//        cout << "    ";
-//        ranges::copy(current_joltage, ostream_iterator<int>(cout, ","));
-//        cout << " -> " << cch << endl;
-//    }
-    return cch;
 }
 
 // https://adventofcode.com/2025/day/10#part2
 template <typename Stream>
 static auto part2(Stream is) {
     timer_scope ts("part2");
-    char c;
-    auto result = 0LL;
-    auto cn = -1;
-    while (true) {
-        cn++;
-        is >> c;
-        if (!is) {
-            return result;
-        }
-        assert(c == '[');
-        // we do not care about lamps in part 2.
-        string lamps;
-        getline(is, lamps, ']');
-
-        vector<vector<int>> button_effects;
-        while (true) {
-            is >> c;
-            if (c == '{') {
-                vector<int> joltage;
-                while (c != '}') {
-                    int n;
-                    is >> n >> c;
-                    joltage.push_back(n);
+    auto result = 0.0;
+    unordered_map<int, future<double>> tasks;
+    auto pool_size = thread::hardware_concurrency() - 1u;
+    string s;
+    int id = 0;
+    while (getline(is, s)) {
+        while (tasks.size() == pool_size) {
+            for (auto& [id, f] : tasks) {
+                if (f.wait_for(0s) == future_status::ready) {
+                    auto r = f.get();
+                    result += r;
+                    cout << id << ": " << r << endl;
+                    tasks.erase(id);
+                    break;
                 }
-
-                vector<unordered_set<int>> affected_joltages(
-                    joltage.size(), {});
-                for (const auto& [i, be] : button_effects | views::enumerate) {
-                    for (auto ji : be) {
-                        affected_joltages[ji].insert(i);
-                    }
-                }
-
-                auto r0 = 0uz;
-                vector<int> buttons_to_remove;
-                for (const auto& [ji, bis]
-                    : affected_joltages | views::enumerate) {
-
-                    if (bis.size() == 1) {
-                        auto bi = *bis.cbegin();
-                        auto d = joltage[ji];
-                        r0 += d;
-                        for (auto be : button_effects[bi]) {
-                            joltage[be] -= d;
-                        }
-                        buttons_to_remove.push_back(bi);
-                    }
-                }
-                ranges::sort(buttons_to_remove);
-                ranges::reverse(buttons_to_remove);
-                for (auto bi : buttons_to_remove) {
-                    button_effects.erase(button_effects.begin() + bi);
-                }
-                cout << "  " << r0
-                    << " / " << buttons_to_remove.size() << endl;
-                vector<int> current_joltage(joltage.size(), 0);
-                unordered_map<vector<int>, size_t> cache;
-                auto r = r0 + find_minimum_presses_for_joltage(
-                    current_joltage,
-                    joltage,
-                    button_effects,
-                    cache
-                );
-                cout << cn << ": " << r << endl;
-                result += r;
-                break;
-            }
-            assert(c == '(');
-            button_effects.emplace_back();
-            while (c != ')') {
-                int n;
-                is >> n >> c;
-                button_effects.back().push_back(n);
             }
         }
+        tasks[++id] = async(run_simulation, s);
     }
-    throw new exception("should never reach this point");
+    for (auto& [id, f] : tasks) {
+        auto r = f.get();
+        result += r;
+        cout << id << ": " << r << endl;
+    }
+    return result;
 }
 
 int main() {
-    cout.imbue(locale(""));
-    auto short_vector = R"([.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
+    auto short_vector = R"([.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7};
 [...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}
 [.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5})"sv;
-    //cout << part1(ispanstream(short_vector)) << endl;
-    //cout << part1(ifstream("input-vector.txt")) << endl;
+    cout << part1(ispanstream(short_vector)) << endl;
+    cout << part1(ifstream("input-vector.txt")) << endl;
     //cout << part2(ispanstream("[.##.] (2) (3) {0,1,0,1}"sv)) << endl;
-    //cout << part2(ispanstream("[.##.] (3) {0,0,0,1}"sv)) << endl;
+    //cout << part2(ispanstream("[.##.] (2) (3) {0,0,1,1}"sv)) << endl;
+    //cout << part2(ispanstream("[.##.] (0) (1) (3) (3) {0,0,0,3}"sv)) << endl;
     cout << part2(ispanstream(short_vector)) << endl;
     cout << part2(ifstream("input-vector.txt")) << endl;
     return 0;
