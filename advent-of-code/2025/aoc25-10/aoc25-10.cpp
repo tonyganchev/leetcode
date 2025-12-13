@@ -9,20 +9,8 @@ using namespace std;
 using lamps_t = unsigned;
 using lamp_mask_t = unsigned;
 
-namespace std {
-    template<>
-    struct hash<vector<int>> {
-        size_t operator ()(const vector<int>& v) const noexcept {
-            auto r = v.size();
-            for (auto n : v) {
-                r ^= n + 0x9e3779b9 + (r << 6) + (r >> 2);
-            }
-            return r;
-        }
-    };
-}
-
-static inline auto encode_lamps(const string& decoded_lamps) {
+template <ranges::range R>
+static inline auto encode_lamps(R decoded_lamps) {
     lamps_t encoded_lamps = 0u;
     for (auto c : decoded_lamps | views::reverse) {
         encoded_lamps = (encoded_lamps << 1) | (c == '#' ? 1 : 0);
@@ -56,121 +44,68 @@ lamps_t press_button_for_lamps(
     return lamps ^ button_effects;
 }
 
+template <typename R>
 static auto find_minimum_presses_for_lamps(
     const lamps_t current_lamps,
     const lamps_t desired_lamps,
     unordered_set<lamps_t>& passed_lamps,
-    const vector<lamp_mask_t>& button_effects,
+    const R button_effects,
     size_t best_so_far) {
 
     if (passed_lamps.size() >= best_so_far) {
         return best_so_far;
     }
 
+
     if (current_lamps == desired_lamps) {
         return passed_lamps.size();
     }
 
-    auto min_presses = numeric_limits<long long>::max();
-    for (const auto& be : button_effects) {
-        lamps_t new_lamps = press_button_for_lamps(current_lamps, be);
-        if (!passed_lamps.contains(new_lamps)) {
-            passed_lamps.insert(new_lamps);
-            auto r = find_minimum_presses_for_lamps(
+    if (button_effects.empty()) {
+        return best_so_far;
+    }
+    auto bf = button_effects.front();
+
+    auto from_next_button =
+        ranges::subrange(next(button_effects.cbegin()), button_effects.cend());
+    best_so_far = min(
+        best_so_far,
+        find_minimum_presses_for_lamps(
+            current_lamps,
+            desired_lamps,
+            passed_lamps,
+            from_next_button,
+            best_so_far));
+
+    lamps_t new_lamps =
+        press_button_for_lamps(current_lamps, bf);
+    if (!passed_lamps.contains(new_lamps)) {
+        passed_lamps.insert(new_lamps);
+        best_so_far = min(
+            best_so_far,
+            find_minimum_presses_for_lamps(
                 new_lamps,
                 desired_lamps,
                 passed_lamps,
-                button_effects,
-                best_so_far);
-            best_so_far = min(best_so_far, r);
-            passed_lamps.erase(new_lamps);
-        }
+                from_next_button,
+                best_so_far));
+        passed_lamps.erase(new_lamps);
     }
 
     return best_so_far;
 }
 
-// https://adventofcode.com/2025/day/10
-template <typename Stream>
-static auto part1(Stream is) {
-    timer_scope ts("part1");
-    char c;
-    auto result = 0LL;
-    while (true) {
-        is >> c;
-        if (!is) {
-            return result;
-        }
-        assert(c == '[');
-        string lamps;
-        getline(is, lamps, ']');
-        vector<lamp_mask_t> button_effects;
-        unordered_set<lamps_t> passed_lamps;
-        while (true) {
+static auto run_lamp_switches(string line) {
+    auto line_items = string_view(line) | views::split(' ');
+    decltype(line_items.front()) lamps;
+    vector<lamp_mask_t> button_effects;
+    for (auto item : line_items) {
+        if (item.front() == '[') {
+            lamps = ranges::subrange(next(item.cbegin()), prev(item.cend()));
+        } else if (item.front() == '(') {
+            ispanstream is(item);
+            char c;
             is >> c;
-            if (c == '{') {
-                assert(passed_lamps.size() == 0);
-                cout << "--------------------------------------------------\n";
-                timer_scope ts_run(lamps.c_str());
-
-                auto desired_lamps = encode_lamps(lamps);
-                auto collateral_lamps = 0u;
-
-                vector<lamp_mask_t> narrowed_button_effects;
-                bool modified = true;
-                while (modified) {
-                    modified = false;
-                    for (auto it = button_effects.begin();
-                        it != button_effects.end();
-                        ++it) {
-
-                        if (*it == desired_lamps) {
-                            // we don't need to test with anything but this map
-                            // and the result will automatically be 1.
-
-                            // clear the list of buttons and only leave the
-                            // current one.
-                            narrowed_button_effects.clear();
-                            narrowed_button_effects.push_back(*it);
-                            // exit the outer loop.
-                            modified = false;
-                            break;
-                        } else {
-                            auto desired_and = (desired_lamps & *it);
-                            auto collateral_and = (collateral_lamps & *it);
-                            if (desired_and != 0 || collateral_lamps != 0) {
-                                // the button touches at least one of the
-                                // desired lamps or the other lambs touched by
-                                // previously-selected buttons.
-                                collateral_lamps |= *it & ~desired_lamps;
-                                narrowed_button_effects.push_back(*it);
-                                button_effects.erase(it);
-                                modified = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                if (button_effects.size() > 0) {
-                    cout << "  optimized away " << button_effects.size()
-                        << " button(s).\n";
-                }
-
-                auto r = find_minimum_presses_for_lamps(
-                    0u,
-                    desired_lamps,
-                    passed_lamps,
-                    narrowed_button_effects,
-                    numeric_limits<size_t>::max());
-                assert(passed_lamps.size() == 0);
-                cout << r << endl;
-                result += r;
-                // we do not care about joltage in part 1.
-                string remainder;
-                getline(is, remainder);
-                break;
-            }
             assert(c == '(');
             vector<int> be;
             while (c != ')') {
@@ -179,20 +114,78 @@ static auto part1(Stream is) {
                 be.push_back(n);
             }
             button_effects.push_back(encode_button_effects_for_lamps(be));
+        } else {
+            // we do not care about joltage in part 1
+            assert(item.front() == '{');
+            break;
         }
     }
-    throw new exception("should never reach this point");
+
+    lamps_t desired_lamps = encode_lamps(lamps);
+
+    auto collateral_lamps = 0u;
+
+    vector<lamp_mask_t> narrowed_button_effects;
+    bool modified = true;
+    while (modified) {
+        modified = false;
+        for (auto it = button_effects.begin();
+            it != button_effects.end();
+            ++it) {
+
+            if (*it == desired_lamps) {
+                // we don't need to test with anything but this map
+                // and the result will automatically be 1.
+
+                // clear the list of buttons and only leave the
+                // current one.
+                narrowed_button_effects.clear();
+                narrowed_button_effects.push_back(*it);
+                // exit the outer loop.
+                modified = false;
+                break;
+            } else {
+                auto desired_and = (desired_lamps & *it);
+                auto collateral_and = (collateral_lamps & *it);
+                if (desired_and != 0 || collateral_lamps != 0) {
+                    // the button touches at least one of the
+                    // desired lamps or the other lambs touched by
+                    // previously-selected buttons.
+                    collateral_lamps |= *it & ~desired_lamps;
+                    narrowed_button_effects.push_back(*it);
+                    button_effects.erase(it);
+                    modified = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    unordered_set<lamps_t> passed_lamps;
+    auto result = find_minimum_presses_for_lamps(
+        0uz,
+        desired_lamps,
+        passed_lamps,
+        ranges::subrange(narrowed_button_effects),
+        numeric_limits<size_t>::max());
+    assert(result <= narrowed_button_effects.size());
+    return result;
+}
+
+// https://adventofcode.com/2025/day/10
+template <typename Stream>
+static auto part1(Stream is) {
+    timer_scope ts("part1");
+    return solve_in_parallel(is, run_lamp_switches);
 }
 
 static const double epsilon = 1e-9;
 
-// Function to check if a double is effectively an integer within tolerance
 bool is_effectively_integer(double val) {
-    return std::abs(val - std::round(val)) < epsilon;
+    return abs(val - round(val)) < epsilon;
 }
 
-// Function that recursively explores parameter combinations
-void find_optimal_solution_recursive(
+static void find_optimal_solution_recursive(
     int param_index,
     int num_params,
     Eigen::VectorXd current_params_d,
@@ -287,11 +280,11 @@ static auto run_simulation(const string line) {
     {
         auto rank = lu_decomp.rank();
         auto nullity = button_effects.size() - rank;
-        
+
         auto kernel = lu_decomp.kernel();
-        
+
         auto particular_solution = lu_decomp.solve(right);
-        
+
         int num_parameters = kernel.cols();
         Eigen::VectorXd initial_params = Eigen::VectorXd::Zero(num_parameters);
 
@@ -306,7 +299,7 @@ static auto run_simulation(const string line) {
         if (found_solution) {
             return best_sum;
         }
-        
+
         return 0.0 + numeric_limits<size_t>::max();
 
     } else {
@@ -321,30 +314,7 @@ static auto run_simulation(const string line) {
 template <typename Stream>
 static auto part2(Stream is) {
     timer_scope ts("part2");
-    auto result = 0.0;
-    unordered_map<int, future<double>> tasks;
-    auto pool_size = thread::hardware_concurrency() - 1u;
-    string s;
-    int id = 0;
-    while (getline(is, s)) {
-        while (tasks.size() == pool_size) {
-            for (auto& [id, f] : tasks) {
-                if (f.wait_for(0s) == future_status::ready) {
-                    auto r = f.get();
-                    result += r;
-                    cout << id << ": " << r << endl;
-                    tasks.erase(id);
-                    break;
-                }
-            }
-        }
-        tasks[++id] = async(run_simulation, s);
-    }
-    for (auto& [id, f] : tasks) {
-        auto r = f.get();
-        result += r;
-        cout << id << ": " << r << endl;
-    }
+    auto result = solve_in_parallel(is, run_simulation);
     return result;
 }
 
@@ -354,9 +324,6 @@ int main() {
 [.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5})"sv;
     cout << part1(ispanstream(short_vector)) << endl;
     cout << part1(ifstream("input-vector.txt")) << endl;
-    //cout << part2(ispanstream("[.##.] (2) (3) {0,1,0,1}"sv)) << endl;
-    //cout << part2(ispanstream("[.##.] (2) (3) {0,0,1,1}"sv)) << endl;
-    //cout << part2(ispanstream("[.##.] (0) (1) (3) (3) {0,0,0,3}"sv)) << endl;
     cout << part2(ispanstream(short_vector)) << endl;
     cout << part2(ifstream("input-vector.txt")) << endl;
     return 0;
