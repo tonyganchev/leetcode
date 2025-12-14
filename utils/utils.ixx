@@ -68,7 +68,7 @@ auto solve_in_parallel(Stream& is, Function& func) {
                 if (f.wait_for(0s) == future_status::ready) {
                     auto r = f.get();
                     result += r;
-                    cout << id << ": " << r << endl;
+                    //cout << id << ": " << r << endl;
                     tasks.erase(id);
                     break;
                 }
@@ -79,7 +79,7 @@ auto solve_in_parallel(Stream& is, Function& func) {
     for (auto& [id, f] : tasks) {
         auto r = f.get();
         result += r;
-        cout << id << ": " << r << endl;
+        //cout << id << ": " << r << endl;
     }
     return result;
 }

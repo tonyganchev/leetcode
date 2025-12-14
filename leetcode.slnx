@@ -6,6 +6,7 @@
   <Folder Name="/advent-of-code/" />
   <Folder Name="/advent-of-code/2024/">
     <Project Path="advent-of-code/2024/aoc24-10/aoc24-10.vcxproj" Id="18aca810-9df5-4768-9858-1e3eef3a0b6c" />
+    <Project Path="advent-of-code/2024/aoc24-12/aoc24-12.vcxproj" Id="3fc38bff-5b42-4f59-926a-e397c431b771" />
   </Folder>
   <Folder Name="/advent-of-code/2025/">
     <Project Path="advent-of-code/2025/aoc25-10/aoc25-10.vcxproj" Id="9ed251e7-2747-436f-9d87-2728aba25f3f" />
