@@ -7,11 +7,11 @@ using namespace std;
 
 // https://adventofcode.com/2024/day/13
 template <typename Stream>
-static auto solve(Stream& is, long long prize_prefix) {
-    auto tokens_spent = 0LL;
+static auto solve(Stream& is, intmax_t prize_prefix) {
+    intmax_t tokens_spent = 0LL;
     string entry;
     while (getline(is, entry)) {
-        long long xa, ya, xb, yb, x, y;
+        intmax_t xa, ya, xb, yb, x, y;
 #pragma warning(suppress : 4996)
         sscanf(entry.c_str(), "Button A: X+%lld, Y+%lld", &xa, &ya);
         getline(is, entry);
@@ -25,9 +25,9 @@ static auto solve(Stream& is, long long prize_prefix) {
         x += prize_prefix;
         y += prize_prefix;
 
-        auto da = x * yb - xb * y;
-        auto db = xa * y - x * ya;
-        auto d = xa * yb - xb * ya;
+        intmax_t da = x * yb - xb * y;
+        intmax_t db = xa * y - x * ya;
+        intmax_t d = xa * yb - xb * ya;
 
         if (d == 0) {
             // both A and B buttons have similar "climb angle".
@@ -41,12 +41,12 @@ static auto solve(Stream& is, long long prize_prefix) {
             if (da % d) {
                 cout << "no integer solution" << endl;
             } else {
-                auto ta = da / d;
-                auto tb = db / d;
+                intmax_t ta = da / d;
+                intmax_t tb = db / d;
                 if (ta < 0 || tb < 0) {
                     assert("no positive integer solution" == "!");
                 } else {
-                    auto ts = 3 * ta + tb;
+                    intmax_t ts = 3 * ta + tb;
                     cout << ts << endl;
                     tokens_spent += ts;
                 }
