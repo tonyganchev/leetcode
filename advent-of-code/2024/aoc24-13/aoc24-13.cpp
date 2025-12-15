@@ -38,7 +38,7 @@ static auto solve(Stream& is, intmax_t prize_prefix) {
                 assert("infinite solutions" == "!");
             }
         } else {
-            if (da % d) {
+            if (da % d != 0 || db % d != 0) {
                 cout << "no integer solution" << endl;
             } else {
                 intmax_t ta = da / d;
