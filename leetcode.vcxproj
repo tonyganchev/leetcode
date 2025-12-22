@@ -130,6 +130,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="460.lfu-cache.cpp" />
     <ClCompile Include="advent-of-code\2024\aoc24-9.cpp" />
     <ClCompile Include="utils.ixx">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCppModule</CompileAs>
